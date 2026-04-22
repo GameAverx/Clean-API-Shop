@@ -10,7 +10,7 @@ def db_init():
                                                     hashed_password TEXT NOT NULL,
                                                     role TEXT CHECK(role IN ('admin', 'buyer', 'seller')) DEFAULT 'buyer' )''')
 
-    cur.execute('''CREATE TABLE IF NOT EXISTS t-shirts (id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cur.execute('''CREATE TABLE IF NOT EXISTS tshirts (id INTEGER PRIMARY KEY AUTOINCREMENT,
                                                     title TEXT NOT NULL,
                                                     price REAL NOT NULL,
                                                     image TEXT,
@@ -18,12 +18,12 @@ def db_init():
                                                     size TEXT CHECK(size IN ('XS', 'S', 'M', 'L', 'XL', 'XXL')),
                                                     seller_id INTEGER NOT NULL, FOREIGN KEY (seller_id) REFERENCES users (id) )''')
 
-    cur.execute(''' CREATE TABLE IF NOT EXISTS sellers (user_id INTEGER PRIMARY KEY,
+    cur.execute('''CREATE TABLE IF NOT EXISTS sellers (user_id INTEGER PRIMARY KEY,
                                                     shop_name TEXT,
                                                     hero_banner TEXT,
                                                     avatar TEXT,
                                                     description TEXT,
-                                                    FOREIGN KEY (user_id) REFERENCES users (id) ''')
+                                                    FOREIGN KEY (user_id) REFERENCES users (id) )''')
 
     cur.execute('''CREATE TABLE IF NOT EXISTS cart (id INTEGER PRIMARY KEY AUTOINCREMENT,
                                                     text TEXT NOT NULL,
@@ -31,7 +31,7 @@ def db_init():
 
     # cur.execute('CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY AUTOINCREMENT, '
     #                                                 'text TEXT NOT NULL, t-shirt_id INTEGER NOT NULL, user_id INTEGER NOT NULL,'
-    #                                                 ' FOREIGN KEY (user_id) REFERENCES users (id) FOREIGN KEY (t-shirt_id) REFERENCES t-shirts (id) )')
+    #                                                 ' FOREIGN KEY (user_id) REFERENCES users (id) FOREIGN KEY (t-shirt_id) REFERENCES tshirts (id) )')
     #
     # cur.execute('CREATE TABLE IF NOT EXISTS likes (id INTEGER PRIMARY KEY AUTOINCREMENT, '
     #                                                 'comment_id INTEGER NOT NULL, user_id INTEGER NOT NULL, '
@@ -40,16 +40,20 @@ def db_init():
 
 
     conn.commit()
-    # conn.close()
+    conn.close()
 
-def query(request, fetch_one=False):
+def query(request, params=(), fetch_one=False):
     conn = sqlite3.connect('demo.db')
+    conn.row_factory = sqlite3.Row
     cur = conn.cursor()
-    try:
-        cur.execute(f'{request}')
-        users = cur.fetchall()
-        print(users)
-    except error as e:
-        return e
+    cur.execute(request, params)
+
+    if fetch_one:
+        result = cur.fetchone()
+    else:
+        result = cur.fetchall()
+    conn.commit()
+    conn.close()
+    return result
 
 
