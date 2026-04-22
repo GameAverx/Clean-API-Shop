@@ -2,7 +2,7 @@ import json
 from http import HTTPStatus
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import http.client
-from handlers import auth
+from handlers import auth, products
 from models import db_init
 
 # conn = http.client.HTTPSConnection("httpbin.org")
@@ -25,21 +25,12 @@ class SimpleHandler(BaseHTTPRequestHandler):
             return {}
         return json.loads(self.rfile.read(length))
 
-
+    # GET запросы
     def mainPage(self):
-        self.send_response(HTTPStatus.OK)
-        self.send_header('Content-type', 'text/html')
-        self.end_headers()
-        response = b'<button>Buy</button>'
-        return response
+        result = products.tshirts_list(self)
+        self.send_json(result[0], result[1])
 
-    def testpage(self):
-        self.send_response(HTTPStatus.OK)
-        self.send_header('Content-type', 'application/json')
-        self.end_headers()
-
-        self.wfile.write(json.dumps({'error': 'Not found23'}, ensure_ascii=False).encode())
-
+    # POST запросы
     def sign_up(self):
         result = auth.register(self.get_json_body())
         self.send_json(result[0], result[1])
@@ -51,10 +42,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
     # типы запросов
     def do_GET(self):
         if self.path == '/':
-            response = self.mainPage()
-            self.wfile.write(response)
-        elif self.path == '/about':
-            response = self.testpage()
+            self.mainPage()
         else:
             self.send_json(404, {'error': 'Not found'})
 
