@@ -11,6 +11,7 @@ def register(body):
         name = body.get('name').strip()
         email = body.get('email').strip()
         password = body.get('password').strip()
+        role = body.get('role').strip()
     else:
         return (400, {'error': 'name, email and password required'})
 
@@ -25,8 +26,8 @@ def register(body):
     # хешируем пароль
     hashed_password = hashlib.sha256(password.encode()).hexdigest()
     try:
-        request_db = '''INSERT INTO users (name, email, hashed_password) VALUES (?,?,?)'''
-        query(request_db, (name, email, hashed_password))
+        request_db = '''INSERT INTO users (name, email, hashed_password, role) VALUES (?,?,?,?)'''
+        query(request_db, (name, email, hashed_password, role))
         return (201, {'message': 'user created'})
 
     except Exception as error:

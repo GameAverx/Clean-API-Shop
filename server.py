@@ -2,9 +2,12 @@ import json
 from http import HTTPStatus
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import http.client
+from urllib.parse import urlparse
+
 from handlers import auth, products
 from models import db_init
-
+import jwt
+from security import SECRET_KEY
 # conn = http.client.HTTPSConnection("httpbin.org")
 # conn.request("GET", "/")
 # r1 = conn.getresponse()
@@ -24,12 +27,22 @@ class SimpleHandler(BaseHTTPRequestHandler):
         if length == 0:
             return {}
         return json.loads(self.rfile.read(length))
+    def is_authentificate(self):
+        user = self.headers.get('Authorization', '')
+        if not user.startswith('Bearer '):
+            return None
+        token = user[7:]
+        try:
+            # для микросервисов нужно использвововать public_key.
+            payload = jwt.decode(token,SECRET_KEY, algorithms= ['HS256'])
+            return payload['user_id']
+        except:
+            return None
 
     # GET запросы
     def mainPage(self):
         result = products.tshirts_list(self)
         self.send_json(result[0], result[1])
-
     # POST запросы
     def sign_up(self):
         result = auth.register(self.get_json_body())
@@ -39,9 +52,13 @@ class SimpleHandler(BaseHTTPRequestHandler):
         result = auth.login(self.get_json_body())
         self.send_json(result[0], result[1])
 
+    def add_product(self):
+        result = products.add_product(self,self.get_json_body())
+        self.send_json(result[0], result[1])
     # типы запросов
     def do_GET(self):
-        if self.path == '/':
+        parsed = urlparse(self.path)
+        if parsed.path == '/products':
             self.mainPage()
         else:
             self.send_json(404, {'error': 'Not found'})
@@ -51,6 +68,8 @@ class SimpleHandler(BaseHTTPRequestHandler):
             self.sign_up()
         elif self.path == '/login':
             self.sign_in()
+        elif self.path == '/add_product':
+            self.add_product()
         else:
             self.send_json(404, {'error': 'Not found'})
 
