@@ -16,14 +16,22 @@ def db_init():
                                                     image TEXT,
                                                     color TEXT CHECK(color IN ('red', 'green', 'blue', 'yellow', 'black', 'white')),
                                                     size TEXT CHECK(size IN ('XS', 'S', 'M', 'L', 'XL', 'XXL')),
-                                                    seller_id INTEGER NOT NULL, FOREIGN KEY (seller_id) REFERENCES users (id) )''')
+                                                    shop_id INTEGER NOT NULL, FOREIGN KEY (shop_id) REFERENCES shops (id))''')
 
-    cur.execute('''CREATE TABLE IF NOT EXISTS sellers (user_id INTEGER PRIMARY KEY,
+    # cur.execute('''CREATE TABLE IF NOT EXISTS sellers (user_id INTEGER PRIMARY KEY,
+    #                                                 shop_name TEXT,
+    #                                                 hero_banner TEXT,
+    #                                                 avatar TEXT,
+    #                                                 description TEXT,
+    #                                                 FOREIGN KEY (user_id) REFERENCES users (id) )''')
+
+    cur.execute('''CREATE TABLE IF NOT EXISTS shops (id INTEGER PRIMARY KEY AUTOINCREMENT,
                                                     shop_name TEXT,
                                                     hero_banner TEXT,
                                                     avatar TEXT,
                                                     description TEXT,
-                                                    FOREIGN KEY (user_id) REFERENCES users (id) )''')
+                                                    seller_id INTEGER,
+                                                    FOREIGN KEY (seller_id) REFERENCES users (id))''')
 
     cur.execute('''CREATE TABLE IF NOT EXISTS cart (id INTEGER PRIMARY KEY AUTOINCREMENT,
                                                     text TEXT NOT NULL,

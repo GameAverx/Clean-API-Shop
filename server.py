@@ -4,7 +4,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import http.client
 from urllib.parse import urlparse
 
-from handlers import auth, products
+from handlers import auth, products, sellers
 from models import db_init
 import jwt
 from security import SECRET_KEY
@@ -43,6 +43,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
     def mainPage(self):
         result = products.tshirts_list(self)
         self.send_json(result[0], result[1])
+
     # POST запросы
     def sign_up(self):
         result = auth.register(self.get_json_body())
@@ -54,6 +55,14 @@ class SimpleHandler(BaseHTTPRequestHandler):
 
     def add_product(self):
         result = products.add_product(self,self.get_json_body())
+        self.send_json(result[0], result[1])
+
+    def new_seller(self):
+        result = sellers.new_seller(self)
+        self.send_json(result[0], result[1])
+
+    def new_shop(self):
+        result = sellers.new_shop(self, self.get_json_body())
         self.send_json(result[0], result[1])
     # типы запросов
     def do_GET(self):
@@ -70,6 +79,10 @@ class SimpleHandler(BaseHTTPRequestHandler):
             self.sign_in()
         elif self.path == '/add_product':
             self.add_product()
+        elif self.path == '/new_seller':
+            self.new_seller()
+        elif self.path == '/new_shop':
+            self.new_shop()
         else:
             self.send_json(404, {'error': 'Not found'})
 

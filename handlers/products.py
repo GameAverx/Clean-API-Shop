@@ -14,10 +14,7 @@ def tshirts_list(handler):
             if '=' in i:
                 key, val = i.split('=')
                 filter[key] = val
-    print(filter)
-    print(filter)
-    print(filter)
-    print(filter)
+
     # настроить на поиск в таблице sellers а не users
 
     # request = '''SELECT t.*, s.shop_name FROM tshirts t
@@ -25,7 +22,7 @@ def tshirts_list(handler):
     #         WHERE 1=1'''
 
     request = '''SELECT t.* FROM tshirts t
-                INNER JOIN users s ON t.seller_id = s.id
+                INNER JOIN shops s ON t.shop_id = s.id
                 WHERE 1=1'''
 
     request_params = []
@@ -71,18 +68,23 @@ def add_product(auth, body):
         return (401, {'error': 'Unauthorized'})
     # проверка прав
     # доработать, изменить таблицу
-    is_seller = query('''SELECT * FROM users WHERE id = ? AND role = "seller" ''', (user_id,), True)
+    is_seller = query('''SELECT id FROM users WHERE id = ? AND role = "seller" ''', (user_id,), True)
     if not is_seller:
         return (403, { 'error' : 'You are not a seller'})
 
     title = body.get('title').strip()
+    shop_id = body.get('shop_id').strip()
+
+    # shop_name = body.get('shop_name').strip()
+    # user_to_shop = query('''SELECT id FROM shops
+    #                     WHERE shop_name = ? and seller_id = ?''', (shop_name,))
     price = body.get('price').strip()
     img = save_images(body.get('images', []))
     color = body.get('color').strip()
     size = body.get('size').strip()
     # сохранение в бд
-    query('''INSERT INTO  tshirts (title, price, image, color, size, seller_id)
-            VALUES (?,?,?,?,?,?)''', (title, float(price), img, color, size, user_id), True)
+    query('''INSERT INTO  tshirts (title, price, image, color, size, shop_id)
+            VALUES (?,?,?,?,?,?)''', (title, float(price), img, color, size, int(shop_id)), True)
 
     return (201, 'Product created')
 
