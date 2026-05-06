@@ -72,7 +72,7 @@ cur = conn.cursor()
 # список магазинов ['DNS']
 
 
-
+# http://localhost:8080/products?color=blue&max_price=3500
 
 
 

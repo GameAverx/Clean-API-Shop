@@ -86,7 +86,92 @@ def add_product(auth, body):
     query('''INSERT INTO  tshirts (title, price, image, color, size, shop_id)
             VALUES (?,?,?,?,?,?)''', (title, float(price), img, color, size, int(shop_id)), True)
 
-    return (201, 'Product created')
+    return (201, {'Success' : 'Product created'})
+
+def edit_product(auth, body, product_id):
+    # проверка авторизацции
+    user_id = auth.is_authentificate()
+    if not user_id:
+        return (401, {'error': 'Unauthorized'})
+    # проверка доступа к товару
+    is_seller_product = query(''' SELECT t.id FROM tshirts t
+                            INNER JOIN shops s ON t.shop_id = s.id
+                            WHERE t.id = ? AND s.seller_id = ? ''', (product_id, user_id), True)
+    if not is_seller_product:
+        return (404, {'error': 'Forbidden'})
+
+
+
+    request = '''UPDATE tshirts SET'''
+    requset_params = []
+    update_parts = []
+
+    img = body.get('images', [])
+    if len(img) > 0:
+        img = save_images(img)
+        update_parts.append('image = ?')
+        requset_params.append(img)
+
+    possible_edits = ['title', 'price', 'color', 'size']
+    for i in possible_edits:
+        pos = body.get(f'{i}')
+        if pos is not None:
+            if i == 'title':
+                update_parts.append('title = ?')
+                requset_params.append(pos.strip())
+            if i == 'size':
+                update_parts.append('size = ?')
+                requset_params.append(pos.strip())
+            if i == 'price':
+                update_parts.append('price = ?')
+                requset_params.append(float(pos.strip()))
+            if i == 'color':
+                update_parts.append('color = ?')
+                requset_params.append(pos.strip())
+    if update_parts:
+        request += ' ' + ', '.join(update_parts)
+        request += ' WHERE id = ?'
+        requset_params.append(product_id)
+
+        query(request, requset_params)
+        return (200, {'Success': 'Product edited'})
+    else:
+        return (400, {'error': 'Incorrect data'})
+
+def del_product(auth, product_id):
+    user_id = auth.is_authentificate()
+    if not user_id:
+        return (401, {'error': 'Unauthorized'})
+    # проверка доступа к товару
+    is_seller_product = query(''' SELECT t.id FROM tshirts t
+                                INNER JOIN shops s ON t.shop_id = s.id
+                                WHERE t.id = ? AND s.seller_id = ? ''', (product_id, user_id), True)
+    if not is_seller_product:
+        return (404, {'error': 'Forbidden'})
+
+    query('''DELETE FROM tshirts WHERE id = ?''', (product_id,), True)
+    return (200, {'Success': 'Product deleted'})
+
+# персонализированная страничка товара
+def get_product(product_id):
+    if product_id.isdigit():
+        request = '''SELECT s.id as shop_id,
+                            s.shop_name,
+                            t.id as tshirts_id,
+                            t.title,
+                            t.price,
+                            t.image,
+                            t.color,
+                            t.size
+                            FROM tshirts t
+                            INNER JOIN shops s ON t.shop_id = s.id
+                            WHERE t.id = ?'''
+        response = dict(query(request, (product_id,), True))
+        return (200, {'Success': response})
+    else:
+        return (400, {'error':'Incorrect shop'})
+
+
 
 # сохранение картинок
 def save_images(image):

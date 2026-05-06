@@ -43,7 +43,15 @@ class SimpleHandler(BaseHTTPRequestHandler):
     def mainPage(self):
         result = products.tshirts_list(self)
         self.send_json(result[0], result[1])
-
+    def shopPage(self, shop_id):
+        # if self.path.startswith('/shopPage/'):
+        #     parts = self.path.split('/')
+        #     shop_id = parts[2]
+        result = sellers.get_shop_page(shop_id)
+        self.send_json(result[0], result[1])
+    def productPage(self, product_id):
+        result = products.get_product(product_id)
+        self.send_json(result[0], result[1])
     # POST запросы
     def sign_up(self):
         result = auth.register(self.get_json_body())
@@ -64,11 +72,34 @@ class SimpleHandler(BaseHTTPRequestHandler):
     def new_shop(self):
         result = sellers.new_shop(self, self.get_json_body())
         self.send_json(result[0], result[1])
+
+    def edit_product(self):
+        if self.path.startswith('/edit_product/'):
+            parts = self.path.split('/')
+            product_id = parts[2]
+            result = products.edit_product(self, self.get_json_body(), product_id)
+            self.send_json(result[0], result[1])
+
+    def del_product(self):
+        if self.path.startswith('/del_product/'):
+            parts = self.path.split('/')
+            product_id = parts[2]
+            result = products.edit_product(self, product_id)
+            self.send_json(result[0], result[1])
+
     # типы запросов
     def do_GET(self):
         parsed = urlparse(self.path)
         if parsed.path == '/products':
             self.mainPage()
+        elif self.path.startswith('/shopPage/'):
+            parts = self.path.split('/')
+            shop_id = parts[2]
+            self.shopPage(shop_id)
+        elif self.path.startswith('/productPage/'):
+            parts = self.path.split('/')
+            product_id = parts[2]
+            self.productPage(product_id)
         else:
             self.send_json(404, {'error': 'Not found'})
 
@@ -83,6 +114,10 @@ class SimpleHandler(BaseHTTPRequestHandler):
             self.new_seller()
         elif self.path == '/new_shop':
             self.new_shop()
+        elif self.path == '/edit_product/':
+            self.edit_product()
+        elif self.path == '/del_product/':
+            self.del_product()
         else:
             self.send_json(404, {'error': 'Not found'})
 
