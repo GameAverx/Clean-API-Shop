@@ -59,21 +59,30 @@ def tshirts_list(handler):
         p = dict(tshirt)
         p['image'] = json.loads(p['image']) if p['image'] else []
         response.append(p)
-    return (200, response)
+    return (200, {'Success' : True, 'payload': response})
+    # return (200, response)
 
-def add_product(auth, body):
+def add_product(auth, body, user_id, shop_id):
     # проверка авторизацции
-    user_id = auth.is_authentificate()
-    if not user_id:
+    is_user = auth.is_authentificate()
+    if not is_user:
         return (401, {'error': 'Unauthorized'})
+
+    if int(is_user) != int(user_id):
+        return (403, {'error': 'Forbidden'})
     # проверка прав
     # доработать, изменить таблицу
     is_seller = query('''SELECT id FROM users WHERE id = ? AND role = "seller" ''', (user_id,), True)
     if not is_seller:
         return (403, { 'error' : 'You are not a seller'})
 
+    is_shop_owner = query(''' SELECT id FROM shops WHERE id = ? AND seller_id = ? ''', (shop_id, user_id), True)
+    if not is_shop_owner:
+        return (403, {'error': 'You are not owner of that shop'})
+
     title = body.get('title').strip()
-    shop_id = body.get('shop_id').strip()
+
+    # shop_id = body.get('shop_id').strip()
 
     # shop_name = body.get('shop_name').strip()
     # user_to_shop = query('''SELECT id FROM shops
@@ -83,22 +92,28 @@ def add_product(auth, body):
     color = body.get('color').strip()
     size = body.get('size').strip()
     # сохранение в бд
-    query('''INSERT INTO  tshirts (title, price, image, color, size, shop_id)
+    response = query('''INSERT INTO  tshirts (title, price, image, color, size, shop_id)
             VALUES (?,?,?,?,?,?)''', (title, float(price), img, color, size, int(shop_id)), True)
 
-    return (201, {'Success' : 'Product created'})
+    return (201, {'Success' : True, 'payload': 'Product added'})
+    # return (201, {'Success' : True, 'payload': response})
 
-def edit_product(auth, body, product_id):
+
+def edit_product(auth, body, user_id, shop_id, product_id):
     # проверка авторизацции
-    user_id = auth.is_authentificate()
-    if not user_id:
+    is_user = auth.is_authentificate()
+    if not is_user:
         return (401, {'error': 'Unauthorized'})
+    if int(is_user) != int(user_id):
+        return (403, {'error': 'Forbidden'})
+
     # проверка доступа к товару
+    # s.id
     is_seller_product = query(''' SELECT t.id FROM tshirts t
-                            INNER JOIN shops s ON t.shop_id = s.id
-                            WHERE t.id = ? AND s.seller_id = ? ''', (product_id, user_id), True)
+                            INNER JOIN shops s ON t.shop_id = ?
+                            WHERE t.id = ? AND s.seller_id = ? ''', (int(shop_id), int(product_id), int(user_id)), True)
     if not is_seller_product:
-        return (404, {'error': 'Forbidden'})
+        return (404, {'error': 'Forbidden. Not a product owner'})
 
 
 
@@ -134,23 +149,27 @@ def edit_product(auth, body, product_id):
         requset_params.append(product_id)
 
         query(request, requset_params)
-        return (200, {'Success': 'Product edited'})
+        return (200, {'Success': True, 'payload': 'Product edited'})
     else:
         return (400, {'error': 'Incorrect data'})
 
-def del_product(auth, product_id):
-    user_id = auth.is_authentificate()
-    if not user_id:
+def del_product(auth, user_id, shop_id, product_id):
+    is_user = auth.is_authentificate()
+    if not is_user:
         return (401, {'error': 'Unauthorized'})
-    # проверка доступа к товару
+    if int(is_user) != int(user_id):
+        return (403, {'error': 'Forbidden'})
+
+    # проверка доступа к товару по shop_id и seller_id
+    # s.id
     is_seller_product = query(''' SELECT t.id FROM tshirts t
-                                INNER JOIN shops s ON t.shop_id = s.id
-                                WHERE t.id = ? AND s.seller_id = ? ''', (product_id, user_id), True)
+                                INNER JOIN shops s ON t.shop_id = ?
+                                WHERE t.id = ? AND s.seller_id = ? ''', (int(shop_id), int(product_id), int(user_id)), True)
     if not is_seller_product:
         return (404, {'error': 'Forbidden'})
 
     query('''DELETE FROM tshirts WHERE id = ?''', (product_id,), True)
-    return (200, {'Success': 'Product deleted'})
+    return (200, {'Success': True, 'payload' : 'Product deleted'})
 
 # персонализированная страничка товара
 def get_product(product_id):

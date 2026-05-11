@@ -3,7 +3,7 @@ from http import HTTPStatus
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import http.client
 from urllib.parse import urlparse
-
+import re
 from handlers import auth, products, sellers
 from models import db_init
 import jwt
@@ -52,6 +52,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
     def productPage(self, product_id):
         result = products.get_product(product_id)
         self.send_json(result[0], result[1])
+
     # POST запросы
     def sign_up(self):
         result = auth.register(self.get_json_body())
@@ -61,8 +62,8 @@ class SimpleHandler(BaseHTTPRequestHandler):
         result = auth.login(self.get_json_body())
         self.send_json(result[0], result[1])
 
-    def add_product(self):
-        result = products.add_product(self,self.get_json_body())
+    def add_product(self, user_id, shop_id):
+        result = products.add_product(self,self.get_json_body(), user_id, shop_id)
         self.send_json(result[0], result[1])
 
     def new_seller(self):
@@ -71,21 +72,21 @@ class SimpleHandler(BaseHTTPRequestHandler):
 
     def new_shop(self):
         result = sellers.new_shop(self, self.get_json_body())
+
         self.send_json(result[0], result[1])
 
-    def edit_product(self):
-        if self.path.startswith('/edit_product/'):
-            parts = self.path.split('/')
-            product_id = parts[2]
-            result = products.edit_product(self, self.get_json_body(), product_id)
-            self.send_json(result[0], result[1])
+    # PUT запросы
+    def edit_product(self, user_id, shop_id, product_id):
+        # if self.path.startswith('/edit_product/'):
+        #     parts = self.path.split('/')
+        #     product_id = parts[2]
+        result = products.edit_product(self, self.get_json_body(), user_id, shop_id, product_id)
+        self.send_json(result[0], result[1])
 
-    def del_product(self):
-        if self.path.startswith('/del_product/'):
-            parts = self.path.split('/')
-            product_id = parts[2]
-            result = products.edit_product(self, product_id)
-            self.send_json(result[0], result[1])
+    # DELETE запросы
+    def del_product(self, user_id, shop_id, product_id):
+        result = products.del_product(self, user_id, shop_id, product_id)
+        self.send_json(result[0], result[1])
 
     # типы запросов
     def do_GET(self):
@@ -104,20 +105,28 @@ class SimpleHandler(BaseHTTPRequestHandler):
             self.send_json(404, {'error': 'Not found'})
 
     def do_POST(self):
-        if self.path == '/register':
+        # добавления продукта /user/(\d+)/shop/(\d+)/product
+        match = re.match(r'^/user/(\d+)/shop/(\d+)/product$', self.path)
+        if match:
+            user_id = match.group(1)
+            shop_id = match.group(2)
+            self.add_product(user_id, shop_id)
+
+
+        elif self.path == '/register':
             self.sign_up()
         elif self.path == '/login':
             self.sign_in()
-        elif self.path == '/add_product':
-            self.add_product()
+        # elif self.path == '/add_product':
+        #     self.add_product()
         elif self.path == '/new_seller':
             self.new_seller()
         elif self.path == '/new_shop':
             self.new_shop()
-        elif self.path == '/edit_product/':
-            self.edit_product()
-        elif self.path == '/del_product/':
-            self.del_product()
+        # elif self.path == '/edit_product/':
+        #     self.edit_product()
+        # elif self.path == '/del_product/':
+        #     self.del_product()
         else:
             self.send_json(404, {'error': 'Not found'})
 
@@ -127,11 +136,28 @@ class SimpleHandler(BaseHTTPRequestHandler):
         # self.send_response(200)
         # self.end_headers()
         # self.wfile.write(f'Получено: {post_data.decode()}'.encode())
+
     def do_PUT(self):
-        pass
+        # edit_product обновление продукта
+        match = re.match(r'^/user/(\d+)/shop/(\d+)/product/(\d+)$', self.path)
+        if match:
+            user_id = match.group(1)
+            shop_id = match.group(2)
+            product_id = match.group(3)
+            self.edit_product(user_id, shop_id, product_id)
+        else:
+            self.send_json(404, {'error': 'Not found'})
 
     def do_DELETE(self):
-        pass
+        # edit_product обновление продукта
+        match = re.match(r'^/user/(\d+)/shop/(\d+)/product/(\d+)$', self.path)
+        if match:
+            user_id = match.group(1)
+            shop_id = match.group(2)
+            product_id = match.group(3)
+            self.del_product(user_id, shop_id, product_id)
+        else:
+            self.send_json(404, {'error': 'Not found'})
 
 if __name__ == '__main__':
     db_init()
