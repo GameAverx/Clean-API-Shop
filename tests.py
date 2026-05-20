@@ -69,6 +69,14 @@ cur = conn.cursor()
 #     "name": "Алексей",
 #      "role": "seller"
 # }
+#  user_id: 6
+# {
+#       "email": "Averx10@example.com",
+#       "password": "mypassword123",
+#      "name": "Dimon",
+#       "role": "seller"
+# }
+
 # список магазинов ['DNS']
 
 

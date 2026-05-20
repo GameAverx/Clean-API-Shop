@@ -4,10 +4,12 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import http.client
 from urllib.parse import urlparse
 import re
-from handlers import auth, products, sellers
+from handlers import auth, products, sellers, cart
 from models import db_init
 import jwt
 from security import SECRET_KEY
+import uuid
+
 # conn = http.client.HTTPSConnection("httpbin.org")
 # conn.request("GET", "/")
 # r1 = conn.getresponse()
@@ -27,6 +29,22 @@ class SimpleHandler(BaseHTTPRequestHandler):
         if length == 0:
             return {}
         return json.loads(self.rfile.read(length))
+
+    def get_session_id(self):
+        cookies = self.headers.get('Cookie', '')
+        session_id = None
+
+        for cookie in cookies.split(';'):
+            if 'session_id=' in cookie:
+                session_id = cookie.split('=')[1].strip()
+                break
+
+        if not session_id:
+            session_id = str(uuid.uuid4())
+            self.send_header('Set-Cookie', f'session_id={session_id}; Path=/')
+
+        return session_id
+
     def is_authentificate(self):
         user = self.headers.get('Authorization', '')
         if not user.startswith('Bearer '):
@@ -72,8 +90,15 @@ class SimpleHandler(BaseHTTPRequestHandler):
 
     def new_shop(self):
         result = sellers.new_shop(self, self.get_json_body())
-
         self.send_json(result[0], result[1])
+
+    def add_to_cart(self, user_id, product_id=False):
+        result = cart.add_to_cart(self, self.get_json_body(), user_id, product_id)
+        self.send_json(result[0], result[1])
+
+    # def new_cart(self, user_id, product_id):
+    #     result = products.add_product(self, self.get_json_body(), user_id, product_id)
+    #     self.send_json(result[0], result[1])
 
     # PUT запросы
     def edit_product(self, user_id, shop_id, product_id):
@@ -83,11 +108,19 @@ class SimpleHandler(BaseHTTPRequestHandler):
         result = products.edit_product(self, self.get_json_body(), user_id, shop_id, product_id)
         self.send_json(result[0], result[1])
 
+
+    def update_cart(self, user_id, product_id=False):
+        result = cart.update_cart(self, self.get_json_body(), user_id, product_id)
+        self.send_json(result[0], result[1])
+
     # DELETE запросы
     def del_product(self, user_id, shop_id, product_id):
         result = products.del_product(self, user_id, shop_id, product_id)
         self.send_json(result[0], result[1])
 
+    def clear_cart(self, user_id):
+        result = cart.clear_cart(self, user_id)
+        self.send_json(result[0], result[1])
     # типы запросов
     def do_GET(self):
         parsed = urlparse(self.path)
@@ -111,6 +144,16 @@ class SimpleHandler(BaseHTTPRequestHandler):
             user_id = match.group(1)
             shop_id = match.group(2)
             self.add_product(user_id, shop_id)
+        # добавить в новую корзину
+        match = re.match(r'^/user/(\d+)/cart$', self.path)
+        if match:
+            user_id = match.group(1)
+            self.add_to_cart(user_id)
+        match = re.match(r'^/user/(\d+)/cart/product/(\d+)$', self.path)
+        if match:
+            user_id = match.group(1)
+            product_id = match.group(2)
+            self.add_to_cart(user_id, product_id)
 
 
         elif self.path == '/register':
@@ -145,6 +188,16 @@ class SimpleHandler(BaseHTTPRequestHandler):
             shop_id = match.group(2)
             product_id = match.group(3)
             self.edit_product(user_id, shop_id, product_id)
+
+        match = re.match(r'^/user/(\d+)/cart$', self.path)
+        if match:
+            user_id = match.group(1)
+            self.update_cart(user_id)
+        match = re.match(r'^/user/(\d+)/cart/product/(\d+)$', self.path)
+        if match:
+            user_id = match.group(1)
+            product_id = match.group(2)
+            self.update_cart(user_id, product_id)
         else:
             self.send_json(404, {'error': 'Not found'})
 
@@ -156,6 +209,11 @@ class SimpleHandler(BaseHTTPRequestHandler):
             shop_id = match.group(2)
             product_id = match.group(3)
             self.del_product(user_id, shop_id, product_id)
+        match = re.match(r'^/user/(\d+)/cart$', self.path)
+        if match:
+            user_id = match.group(1)
+            self.clear_cart(user_id)
+
         else:
             self.send_json(404, {'error': 'Not found'})
 

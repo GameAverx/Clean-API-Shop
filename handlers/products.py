@@ -92,7 +92,7 @@ def add_product(auth, body, user_id, shop_id):
     color = body.get('color').strip()
     size = body.get('size').strip()
     # сохранение в бд
-    response = query('''INSERT INTO  tshirts (title, price, image, color, size, shop_id)
+    response = query('''INSERT INTO tshirts (title, price, image, color, size, shop_id)
             VALUES (?,?,?,?,?,?)''', (title, float(price), img, color, size, int(shop_id)), True)
 
     return (201, {'Success' : True, 'payload': 'Product added'})

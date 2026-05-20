@@ -32,10 +32,16 @@ def db_init():
                                                     description TEXT,
                                                     seller_id INTEGER,
                                                     FOREIGN KEY (seller_id) REFERENCES users (id))''')
+    # items_id хранится словарь json формата с ключом: tshirts id и значением кол-во товара '{'2':5}' '2' - id, 5 - quantity,
+    cur.execute('''CREATE TABLE IF NOT EXISTS user_cart (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                    items TEXT NOT NULL,
+                                                    user_id INTEGER NOT NULL, FOREIGN KEY (user_id) REFERENCES users (id))''')
 
-    cur.execute('''CREATE TABLE IF NOT EXISTS cart (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                    text TEXT NOT NULL,
-                                                    hashed_password TEXT NOT NULL)''')
+    # cur.execute(''' CREATE TABLE IF NOT EXISTS nonAuthUserCart (id INTEGER PRIMARY KEY AUTOINCREMENT,
+    #                                                             items TEXT NOT NULL,
+    #                                                             session_id TEXT UNIQUE NOT NULL) ''')
+
+
 
     # cur.execute('CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY AUTOINCREMENT, '
     #                                                 'text TEXT NOT NULL, t-shirt_id INTEGER NOT NULL, user_id INTEGER NOT NULL,'
