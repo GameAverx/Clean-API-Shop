@@ -37,6 +37,12 @@ def db_init():
                                                     items TEXT NOT NULL,
                                                     user_id INTEGER NOT NULL, FOREIGN KEY (user_id) REFERENCES users (id))''')
 
+    cur.execute('''CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                        order_id TEXT UNIQUE,
+                                                        total_amount REAL,
+                                                        status TEXT CHECK(status IN ('pending', 'paid', 'canceled')) DEFAULT 'pending',
+                                                        payment_id TEXT,
+                                                        user_id INTEGER NOT NULL, FOREIGN KEY (user_id) REFERENCES users (id))''')
     # cur.execute(''' CREATE TABLE IF NOT EXISTS nonAuthUserCart (id INTEGER PRIMARY KEY AUTOINCREMENT,
     #                                                             items TEXT NOT NULL,
     #                                                             session_id TEXT UNIQUE NOT NULL) ''')

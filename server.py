@@ -18,6 +18,8 @@ import uuid
 
 
 class SimpleHandler(BaseHTTPRequestHandler):
+
+
     def send_json(self, status, data):
         self.send_response(status)
         self.send_header('Content-Type', 'application/json')
@@ -70,6 +72,10 @@ class SimpleHandler(BaseHTTPRequestHandler):
     def productPage(self, product_id):
         result = products.get_product(product_id)
         self.send_json(result[0], result[1])
+    # проверка оплаты заказа
+    def complete_order(self, user_id, order_id):
+        result = cart.complete_order(self, user_id, order_id)
+        self.send_json(result[0], result[1])
 
     # POST запросы
     def sign_up(self):
@@ -100,6 +106,11 @@ class SimpleHandler(BaseHTTPRequestHandler):
     #     result = products.add_product(self, self.get_json_body(), user_id, product_id)
     #     self.send_json(result[0], result[1])
 
+    # оплата корзины
+    def purchase(self, user_id):
+        result = cart.payment(self, user_id)
+        self.send_json(result[0], result[1])
+
     # PUT запросы
     def edit_product(self, user_id, shop_id, product_id):
         # if self.path.startswith('/edit_product/'):
@@ -124,6 +135,13 @@ class SimpleHandler(BaseHTTPRequestHandler):
     # типы запросов
     def do_GET(self):
         parsed = urlparse(self.path)
+
+        match = re.match(r'^/user/(\d+)/order/([A-Z0-9]+)/complete$', self.path)
+        if match:
+            user_id = match.group(1)
+            order_id = match.group(2)
+            self.complete_order(user_id, order_id)
+
         if parsed.path == '/products':
             self.mainPage()
         elif self.path.startswith('/shopPage/'):
@@ -144,7 +162,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
             user_id = match.group(1)
             shop_id = match.group(2)
             self.add_product(user_id, shop_id)
-        # добавить в новую корзину
+        # добавить в новую корзину несколько товаров
         match = re.match(r'^/user/(\d+)/cart$', self.path)
         if match:
             user_id = match.group(1)
@@ -154,7 +172,10 @@ class SimpleHandler(BaseHTTPRequestHandler):
             user_id = match.group(1)
             product_id = match.group(2)
             self.add_to_cart(user_id, product_id)
-
+        match = re.match(r'^/user/(\d+)/cart/payment$', self.path)
+        if match:
+            user_id = match.group(1)
+            self.purchase(user_id)
 
         elif self.path == '/register':
             self.sign_up()
