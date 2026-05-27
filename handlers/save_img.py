@@ -3,9 +3,6 @@ import uuid
 import base64
 import json
 
-
-
-
 def save_images(dir_path,image):
     saved_images = []
     if isinstance(image, str):
@@ -18,7 +15,7 @@ def save_images(dir_path,image):
         try:
             image_bytes = base64.b64decode(img_base64)
         except base64.binascii.Error as e:
-            return (400, {'error': f'Image #{idx+1} is corrupted: {str(e)}'})
+            return (400, {'Success' : False, 'payload': f'Image #{idx+1} is corrupted: {str(e)}'})
 
         filename = f"img_{idx+1}_{uuid.uuid4()}.jpg"
         filepath = f"{dir_path}/{filename}"

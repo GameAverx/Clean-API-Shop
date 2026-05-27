@@ -36,7 +36,7 @@ def db_init():
     cur.execute('''CREATE TABLE IF NOT EXISTS user_cart (id INTEGER PRIMARY KEY AUTOINCREMENT,
                                                     items TEXT NOT NULL,
                                                     user_id INTEGER NOT NULL, FOREIGN KEY (user_id) REFERENCES users (id))''')
-
+    # ДОБАВИТЬ СТОЛБЕЦ order_number для
     cur.execute('''CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT,
                                                         order_id TEXT UNIQUE,
                                                         total_amount REAL,

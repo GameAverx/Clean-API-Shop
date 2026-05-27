@@ -110,7 +110,9 @@ class SimpleHandler(BaseHTTPRequestHandler):
     def purchase(self, user_id):
         result = cart.payment(self, user_id)
         self.send_json(result[0], result[1])
-
+    def yookassa_webhook(self):
+        result = cart.yookassa_webhook(self.get_json_body())
+        self.send_json(result[0], result[1])
     # PUT запросы
     def edit_product(self, user_id, shop_id, product_id):
         # if self.path.startswith('/edit_product/'):
@@ -176,6 +178,9 @@ class SimpleHandler(BaseHTTPRequestHandler):
         if match:
             user_id = match.group(1)
             self.purchase(user_id)
+        #     https://ваш-сайт.ru/api/yookassa-webhook
+        elif self.path == '/api/yookassa-webhook':
+            self.yookassa_webhook()
 
         elif self.path == '/register':
             self.sign_up()

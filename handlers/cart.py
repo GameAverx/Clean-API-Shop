@@ -234,3 +234,5 @@ def complete_order(auth, user_id, order_id):
         return (400, {'Success': False, 'payload': 'Payment canceled'})
     else:
          return (400, {'Success': False, 'payload': 'Payment not completed'})
+def yookassa_webhook(body):
+    pass

@@ -10,29 +10,30 @@ def new_seller(auth):
     # проверка авторизацции
     user_id = auth.is_authentificate()
     if not user_id:
-        return (401, {'error': 'Unauthorized'})
+        return (401, {'Success': False, 'payload': 'Unauthorized'})
     # проверка роли
     current_role = query('''SELECT role FROM users WHERE id = ?''', (user_id,), True)
     if current_role[0] == "seller":
-        return (400, {'error': 'You are already seller'})
+        return (400, {'Success': False, 'payload': 'You are already seller'})
 
     # sql
 
     sql_request = '''UPDATE users SET role = "seller" WHERE id = ?'''
     query(sql_request, (user_id,), True)
 
-    return (200, {'message': 'The role has changed'})
+    return (200, {'Success': True, 'payload': 'The role has changed'})
+
 
 # без проверки привязанности магазина к селеру
 def new_shop(auth, body):
     # проверка авторизацции
     user_id = auth.is_authentificate()
     if not user_id:
-        return (401, {'error': 'Unauthorized'})
+        return (401, {'Success': False, 'payload': 'Unauthorized'})
     # проверка роли
     current_role = query('''SELECT role FROM users WHERE id = ?''', (user_id,), True)
     if current_role[0] != "seller":
-        return (403, {'error': 'You are not a seller'})
+        return (403, {'Success' : False, 'payload': 'You are not a seller'})
 
     # body
     shop_name = body.get('shop_name').strip()
@@ -44,7 +45,8 @@ def new_shop(auth, body):
     sql_request = '''INSERT INTO shops (shop_name, hero_banner, avatar, description, seller_id) VALUES (?,?,?,?,?)'''
     query(sql_request, (shop_name, hero_banner, avatar, description, user_id), True)
 
-    return (201, {'message': f'The {shop_name} was created'})
+    return (201, {'Success' : True, 'payload': f'The {shop_name} was created'})
+
 
 def get_shop_page(shop_id):
     if shop_id.isdigit():
@@ -86,42 +88,8 @@ def get_shop_page(shop_id):
                 'shop': shop_data,
                 'products': products
             }
-            return (200, {'Success': result} )
+            return (200, {'Success' : True, 'payload': result})
         else:
-            return (400, {'error': 'Shop not found'})
+            return (400, {'Success' : False, 'payload': 'Shop not found'})
     else:
-        return (400, {'error':'Incorrect shop'})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        return (400, {'Success' : False, 'payload': 'Incorrect shop'})

@@ -3,6 +3,7 @@ import os
 import uuid
 import base64
 import json
+from .save_img import save_images
 
 
 def tshirts_list(handler):
@@ -66,19 +67,19 @@ def add_product(auth, body, user_id, shop_id):
     # проверка авторизацции
     is_user = auth.is_authentificate()
     if not is_user:
-        return (401, {'error': 'Unauthorized'})
+        return (401, {'Success' : False, 'payload': 'Unauthorized'})
 
     if int(is_user) != int(user_id):
-        return (403, {'error': 'Forbidden'})
+        return (403, {'Success' : False, 'payload': 'Forbidden'})
     # проверка прав
     # доработать, изменить таблицу
     is_seller = query('''SELECT id FROM users WHERE id = ? AND role = "seller" ''', (user_id,), True)
     if not is_seller:
-        return (403, { 'error' : 'You are not a seller'})
+        return (403, {'Success' : False, 'payload' : 'You are not a seller'})
 
     is_shop_owner = query(''' SELECT id FROM shops WHERE id = ? AND seller_id = ? ''', (shop_id, user_id), True)
     if not is_shop_owner:
-        return (403, {'error': 'You are not owner of that shop'})
+        return (403, {'Success' : False, 'payload': 'You are not owner of that shop'})
 
     title = body.get('title').strip()
 
@@ -88,7 +89,8 @@ def add_product(auth, body, user_id, shop_id):
     # user_to_shop = query('''SELECT id FROM shops
     #                     WHERE shop_name = ? and seller_id = ?''', (shop_name,))
     price = body.get('price').strip()
-    img = save_images(body.get('images', []))
+    # static/products
+    img = save_images('static/products', body.get('images', []))
     color = body.get('color').strip()
     size = body.get('size').strip()
     # сохранение в бд
@@ -103,9 +105,9 @@ def edit_product(auth, body, user_id, shop_id, product_id):
     # проверка авторизацции
     is_user = auth.is_authentificate()
     if not is_user:
-        return (401, {'error': 'Unauthorized'})
+        return (401, {'Success' : False, 'payload': 'Unauthorized'})
     if int(is_user) != int(user_id):
-        return (403, {'error': 'Forbidden'})
+        return (403, {'Success' : False, 'payload': 'Forbidden'})
 
     # проверка доступа к товару
     # s.id
@@ -113,7 +115,7 @@ def edit_product(auth, body, user_id, shop_id, product_id):
                             INNER JOIN shops s ON t.shop_id = ?
                             WHERE t.id = ? AND s.seller_id = ? ''', (int(shop_id), int(product_id), int(user_id)), True)
     if not is_seller_product:
-        return (404, {'error': 'Forbidden. Not a product owner'})
+        return (404, {'Success' : False, 'payload': 'Forbidden. Not a product owner'})
 
 
 
@@ -123,7 +125,8 @@ def edit_product(auth, body, user_id, shop_id, product_id):
 
     img = body.get('images', [])
     if len(img) > 0:
-        img = save_images(img)
+        # static/products
+        img = save_images('static/products', img)
         update_parts.append('image = ?')
         requset_params.append(img)
 
@@ -151,14 +154,14 @@ def edit_product(auth, body, user_id, shop_id, product_id):
         query(request, requset_params)
         return (200, {'Success': True, 'payload': 'Product edited'})
     else:
-        return (400, {'error': 'Incorrect data'})
+        return (400, {'Success' : False, 'payload': 'Incorrect data'})
 
 def del_product(auth, user_id, shop_id, product_id):
     is_user = auth.is_authentificate()
     if not is_user:
-        return (401, {'error': 'Unauthorized'})
+        return (401, {'Success' : False, 'payload': 'Unauthorized'})
     if int(is_user) != int(user_id):
-        return (403, {'error': 'Forbidden'})
+        return (403, {'Success' : False, 'payload': 'Forbidden'})
 
     # проверка доступа к товару по shop_id и seller_id
     # s.id
@@ -166,7 +169,7 @@ def del_product(auth, user_id, shop_id, product_id):
                                 INNER JOIN shops s ON t.shop_id = ?
                                 WHERE t.id = ? AND s.seller_id = ? ''', (int(shop_id), int(product_id), int(user_id)), True)
     if not is_seller_product:
-        return (404, {'error': 'Forbidden'})
+        return (404, {'Success' : False, 'payload': 'Forbidden'})
 
     query('''DELETE FROM tshirts WHERE id = ?''', (product_id,), True)
     return (200, {'Success': True, 'payload' : 'Product deleted'})
@@ -186,36 +189,36 @@ def get_product(product_id):
                             INNER JOIN shops s ON t.shop_id = s.id
                             WHERE t.id = ?'''
         response = dict(query(request, (product_id,), True))
-        return (200, {'Success': response})
+        return (200, {'Success' : True, 'payload': response})
     else:
-        return (400, {'error':'Incorrect shop'})
+        return (400, {'Success' : False, 'payload':'Incorrect shop'})
 
 
 
 # сохранение картинок
-def save_images(image):
-    saved_images = []
-    if isinstance(image, str):
-        image = [image]
-
-    for idx, img_base64 in enumerate(image):
-        if ',' in img_base64:
-            img_base64 = img_base64.split(',')[1]
-
-        try:
-            image_bytes = base64.b64decode(img_base64)
-        except base64.binascii.Error as e:
-            return (400, {'error': f'Image #{idx+1} is corrupted: {str(e)}'})
-
-        filename = f"img_{idx+1}_{uuid.uuid4()}.jpg"
-        filepath = f"static/products/{filename}"
-
-        os.makedirs("static/products", exist_ok=True)
-        with open(filepath, 'wb') as f:
-            f.write(image_bytes)
-        saved_images.append(filepath)
-
-    return json.dumps(saved_images)
+# def save_images(image):
+#     saved_images = []
+#     if isinstance(image, str):
+#         image = [image]
+#
+#     for idx, img_base64 in enumerate(image):
+#         if ',' in img_base64:
+#             img_base64 = img_base64.split(',')[1]
+#
+#         try:
+#             image_bytes = base64.b64decode(img_base64)
+#         except base64.binascii.Error as e:
+#             return (400, {'Success' : False, 'payload': f'Image #{idx+1} is corrupted: {str(e)}'})
+#
+#         filename = f"img_{idx+1}_{uuid.uuid4()}.jpg"
+#         filepath = f"static/products/{filename}"
+#
+#         os.makedirs("static/products", exist_ok=True)
+#         with open(filepath, 'wb') as f:
+#             f.write(image_bytes)
+#         saved_images.append(filepath)
+#
+#     return json.dumps(saved_images)
 
 
 
