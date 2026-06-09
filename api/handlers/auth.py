@@ -1,6 +1,6 @@
-from ..models import query
+from models import query
 import hashlib
-from ..security import SECRET_KEY
+from security import SECRET_KEY
 import jwt
 from datetime import datetime, timedelta
 

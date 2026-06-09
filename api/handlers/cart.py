@@ -1,5 +1,5 @@
 import uuid
-from ..models import query
+from models import query
 import json
 # оплата
 import logging

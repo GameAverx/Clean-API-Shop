@@ -6,12 +6,12 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . /app/api
+COPY . /app
 
 ENV PYTHONPATH=/app
 
 EXPOSE 8001
-CMD ["python", "-m", "api.server"]
+CMD ["python", "server.py"]
 
 # docker build api/.
 # docker run -p 8080:8001 =id=
