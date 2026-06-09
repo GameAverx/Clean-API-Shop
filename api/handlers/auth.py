@@ -1,6 +1,6 @@
-from models import query
+from ..models import query
 import hashlib
-from security import SECRET_KEY
+from ..security import SECRET_KEY
 import jwt
 from datetime import datetime, timedelta
 
@@ -62,3 +62,6 @@ def login(body):
         return (200, {'Success': True, 'token': token, 'payload': 'Successful login'})
     else:
         return (401, {'Success': False, 'payload': 'Invalid data'})
+
+
+

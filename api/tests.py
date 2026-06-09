@@ -79,6 +79,14 @@ cur = conn.cursor()
 
 # список магазинов ['DNS']
 
+# {
+#     "data": [
+#    {
+#      "productId": "1",
+#      "quantity": 1
+#    }
+#     ]
+# }
 
 # http://localhost:8080/products?color=blue&max_price=3500
 

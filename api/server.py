@@ -1,20 +1,22 @@
 import json
-from http import HTTPStatus
 from http.server import HTTPServer, BaseHTTPRequestHandler
-import http.client
 from urllib.parse import urlparse
 import re
-from handlers import auth, products, sellers, cart
-from models import db_init
+from .handlers import auth, products, sellers, cart, users
+from .models import db_init
 import jwt
-from security import SECRET_KEY
+from .security import SECRET_KEY
 import uuid
+import logging
 
 # conn = http.client.HTTPSConnection("httpbin.org")
 # conn.request("GET", "/")
 # r1 = conn.getresponse()
 # print(r1.status, r1.reason)
-
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 
 class SimpleHandler(BaseHTTPRequestHandler):
@@ -78,6 +80,9 @@ class SimpleHandler(BaseHTTPRequestHandler):
         self.send_json(result[0], result[1])
 
     # POST запросы
+    def avatar(self, user_id):
+        result = users.avatar(self, self.get_json_body(), user_id)
+        self.send_json(result[0], result[1])
     def sign_up(self):
         result = auth.register(self.get_json_body())
         self.send_json(result[0], result[1])
@@ -87,7 +92,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
         self.send_json(result[0], result[1])
 
     def add_product(self, user_id, shop_id):
-        result = products.add_product(self,self.get_json_body(), user_id, shop_id)
+        result = products.add_product(self, self.get_json_body(), user_id, shop_id)
         self.send_json(result[0], result[1])
 
     def new_seller(self):
@@ -179,6 +184,12 @@ class SimpleHandler(BaseHTTPRequestHandler):
             user_id = match.group(1)
             self.purchase(user_id)
         #     https://ваш-сайт.ru/api/yookassa-webhook
+
+        match = re.match(r'^/user/(\d+)/avatar$', self.path)
+        if match:
+            user_id = match.group(1)
+            self.avatar(user_id)
+
         elif self.path == '/api/yookassa-webhook':
             self.yookassa_webhook()
 
@@ -245,8 +256,13 @@ class SimpleHandler(BaseHTTPRequestHandler):
 
 if __name__ == '__main__':
     db_init()
-    server = HTTPServer(('localhost', 8080), SimpleHandler)
-    print("Сервер запущен на http://localhost:8080")
+
+    # server = HTTPServer(('localhost', 8080), SimpleHandler)
+    # для docker c 8001
+    server = HTTPServer(('0.0.0.0', 8001), SimpleHandler)
+    # print("Сервер запущен на http://localhost:8080")
+    print("Server running on port 8001")
+    logging.info("Server running on port 8001")
     server.serve_forever()
 
 

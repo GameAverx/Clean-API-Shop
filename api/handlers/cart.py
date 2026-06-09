@@ -1,8 +1,15 @@
 import uuid
-from models import query
+from ..models import query
 import json
 # оплата
+import logging
 from yookassa import Configuration, Payment
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 
 # не актуально если в url всегда есть данные о user  /user/:userId/cart/product/:productId
@@ -180,6 +187,7 @@ def payment(handler, user_id):
     payment_url = payment['confirmation']['confirmation_url']
     payment_id = payment['id']
     # payment_status = payment['status']
+    logging.info(f"payment_url {payment_url}")
     print(payment_url)
     print(payment_url)
     print(payment_url)
@@ -236,3 +244,9 @@ def complete_order(auth, user_id, order_id):
          return (400, {'Success': False, 'payload': 'Payment not completed'})
 def yookassa_webhook(body):
     pass
+
+
+# # Просто выполните в терминале:
+# ssh -R 80:localhost:8080 serveo.net
+#
+# # Получите URL: https://subdomain.serveo.net
