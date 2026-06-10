@@ -262,7 +262,7 @@ if __name__ == '__main__':
     server = HTTPServer(('0.0.0.0', 8001), SimpleHandler)
     # print("Сервер запущен на http://localhost:8080")
     print("Server running on port 8001")
-    logging.info("Server running on port 8001")
+    logging.info("Server running on port 8001 but if u use Docker it should send request call on port 8080")
     server.serve_forever()
 
 

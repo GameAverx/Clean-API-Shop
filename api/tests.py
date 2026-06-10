@@ -42,7 +42,7 @@ import sqlite3
 #             VALUES (?,?,?,?,?,?)'''
 #
 # params = ("Лонгслив", 3000.0, "static/products/img_1_eqewqdsa.png", "blue", "XXL", 2)
-conn = sqlite3.connect('demo.db')
+conn = sqlite3.connect('../data/demo.db')
 conn.row_factory = sqlite3.Row
 cur = conn.cursor()
 

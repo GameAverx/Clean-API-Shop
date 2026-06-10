@@ -1,11 +1,48 @@
 version: '3.8'
 
 services:
+
   redis:
     image: redis:7.2.4-alpine
     container_name: my_redis
     ports:
-      - "6379:6379"
+      - "8067:6379"
     volumes:
       - ./redis_data:/data
+    command: redis-server --appendonly yes
     restart: unless-stopped
+
+  server-api:
+    build: ./api
+    container_name: server-api-container
+    volumes:
+      - ./api:/app/api # для api
+      - ./data:/app/data # для БД
+    ports:
+      - "8080:8001"
+    depends_on:
+      - redis
+    environment:
+      - DB_PATH=/app/data/demo.db
+    restart: no
+
+volumes:
+  redis_data:
+
+#volumes:
+#  demodb_dir: null
+#  demodb:
+#    image: sqlite:13
+#    container_name: server-db
+#    volumes:
+#      - demodb_dir:/
+#    restart: always
+
+#    depends_on:
+#      - demodb
+
+
+
+
+# docker-compose run
+

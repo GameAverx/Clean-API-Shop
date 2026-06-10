@@ -1,8 +1,8 @@
 import sqlite3
 
-
+DB_PATH = "../data/demo.db"
 def db_init():
-    conn = sqlite3.connect('demo.db')
+    conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
     cur.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,
@@ -63,7 +63,7 @@ def db_init():
     conn.close()
 
 def query(request, params=(), fetch_one=False):
-    conn = sqlite3.connect('demo.db')
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
     cur.execute(request, params)

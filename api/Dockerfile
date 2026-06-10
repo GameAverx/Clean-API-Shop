@@ -14,6 +14,7 @@ EXPOSE 8001
 CMD ["python", "server.py"]
 
 # docker build api/.
+# docker build -t my-app  ./app
 # docker run -p 8080:8001 =id=
 # удаление = rm
 # docker image rm =id=
