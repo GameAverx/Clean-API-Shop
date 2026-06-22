@@ -1,5 +1,6 @@
+sizes = [(160, 160), (64, 64), (240, 240), (500,500)]
 
-
+print(max(sizes)[0])
 # reg
 # {
 #     "email": "user@example.com",

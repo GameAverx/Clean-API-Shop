@@ -1,11 +1,14 @@
-from PIL import Image
+from PIL import Image, ImageFilter
 import base64
 from io import BytesIO
 def process_image(image_base64, sizes):
     image = base64_to_pil(image_base64)
     for size in sizes:
         width, height = size
-        crop_to_viewport(image, width, height)
+        cropped = crop_to_viewport(image, width, height)
+        print("1232132132134wtf")
+        cropped.save(f'static/images/output{width}.jpg', format='JPEG', quality=85)
+    # generate_skeleton(f"static/images/output{max(sizes)[0]}.jpg")
 #     тут по идеи должно быть сохранение байтов в сетевую бд  типо s3
 
 # Превращаем base64 в PIL Image
@@ -43,4 +46,36 @@ def crop_to_viewport(image: Image, target_width: int, target_height: int) -> Ima
         image = image.crop((0, top, image.width, top + new_height))
 
     # Финальный ресайз до нужного размера
-    return image.resize((target_width, target_height), Image.Resampling.LANCZOS)
+    return image.resize((target_width, target_height), Image.Resampling.LANCZOS) #PIL Image
+
+
+def generate_skeleton(image_path, blur_width=20, blur_radius=2, quality=30):
+    """
+    Генерирует base64-строку скелетона.
+    """
+    # 1. Открываем оригинальное изображение
+    img = Image.open(image_path)
+
+    # 2. Изменяем размер до очень маленького (например, 20px по ширине)
+    #    Сохраняем пропорции, чтобы не искажать содержимое.
+    width, height = img.size
+    ratio = blur_width / width
+    new_size = (blur_width, int(height * ratio))
+    img.thumbnail(new_size, Image.Resampling.LANCZOS)
+
+    # 3. Применяем сильное размытие по Гауссу
+    img = img.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+
+    # 4. Сохраняем в буфер с сильным сжатием (низкое качество)
+    buffer = BytesIO()
+    img.save(buffer, format='JPEG', quality=quality)
+    img_bytes = buffer.getvalue()
+
+    # 5. Кодируем в base64
+    base64_string = base64.b64encode(img_bytes).decode('utf-8')
+    print(f"data:image/jpeg;base64,{base64_string}")
+    return f"data:image/jpeg;base64,{base64_string}"
+
+# Использование
+skeleton_data_uri = generate_skeleton('static/images/output240.jpg')
+print(skeleton_data_uri)
