@@ -30,7 +30,8 @@ def upload_product_image(body, sizes, user_id):
     task_id = str(uuid.uuid4())
     task = {
         'task_id': task_id,
-        'type': 'process_product_image',
+        # 'type': 'process_product_image',
+        'type': 'process_avatar_image',
         # 'product_id': product_id,
         'user_id': user_id,
         'image_data': image_base64,  # или URL временного файла

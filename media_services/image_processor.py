@@ -1,15 +1,31 @@
 from PIL import Image, ImageFilter
 import base64
 from io import BytesIO
-def process_image(image_base64, sizes):
+import os
+
+def process_image(image_base64, sizes, type, id): #id для папки
     image = base64_to_pil(image_base64)
     for size in sizes:
         width, height = size
         cropped = crop_to_viewport(image, width, height)
         print("1232132132134wtf")
-        cropped.save(f'static/images/output{width}.jpg', format='JPEG', quality=85)
-    # generate_skeleton(f"static/images/output{max(sizes)[0]}.jpg")
-#     тут по идеи должно быть сохранение байтов в сетевую бд  типо s3
+        if type == 'avatar':
+            os.makedirs(f"static/images/profiles/{id}", exist_ok=True)
+            cropped.save(f'static/images/profiles/{id}/{width}.jpg', format='JPEG', quality=85)
+
+        elif type == 'product':
+            os.makedirs(f"static/images/product/{id}", exist_ok=True)
+            cropped.save(f'static/images/product/{id}/{width}.jpg', format='JPEG', quality=85)
+
+    if type == 'avatar':
+        skeleton = generate_skeleton(f"static/images/profiles/{id}/{max(sizes)[0]}.jpg")
+        skeleton.save(f'static/images/profiles/{id}/skeleton.jpg', format='JPEG', quality=30)
+        # skeleton_base64 = generate_skeleton(f"static/images/profiles/{id}/{max(sizes)[0]}.jpg")
+    elif type == 'product':
+        skeleton = generate_skeleton(f"static/images/product/{id}/{max(sizes)[0]}.jpg")
+        skeleton.save(f'static/images/product/{id}/skeleton.jpg', format='JPEG', quality=30)
+        # skeleton_base64 = generate_skeleton(f"static/images/{id}/skeleton{max(sizes)[0]}.jpg")
+
 
 # Превращаем base64 в PIL Image
 def base64_to_pil(base64_string):
@@ -23,6 +39,8 @@ def base64_to_pil(base64_string):
     # Превращаем байты в PIL Image
     image = Image.open(BytesIO(image_bytes))
     return image
+
+
 # target_width, target_height это желаемый размер
 def crop_to_viewport(image: Image, target_width: int, target_height: int) -> Image:
     """
@@ -46,7 +64,7 @@ def crop_to_viewport(image: Image, target_width: int, target_height: int) -> Ima
         image = image.crop((0, top, image.width, top + new_height))
 
     # Финальный ресайз до нужного размера
-    return image.resize((target_width, target_height), Image.Resampling.LANCZOS) #PIL Image
+    return image.resize((target_width, target_height), Image.Resampling.LANCZOS)  # PIL Image
 
 
 def generate_skeleton(image_path, blur_width=20, blur_radius=2, quality=30):
@@ -63,19 +81,20 @@ def generate_skeleton(image_path, blur_width=20, blur_radius=2, quality=30):
     new_size = (blur_width, int(height * ratio))
     img.thumbnail(new_size, Image.Resampling.LANCZOS)
 
-    # 3. Применяем сильное размытие по Гауссу
+    # сильное размытие по Гауссу
     img = img.filter(ImageFilter.GaussianBlur(radius=blur_radius))
 
-    # 4. Сохраняем в буфер с сильным сжатием (низкое качество)
+    # 4.Сохраняем в буфер с сильным сжатием
     buffer = BytesIO()
     img.save(buffer, format='JPEG', quality=quality)
     img_bytes = buffer.getvalue()
 
-    # 5. Кодируем в base64
-    base64_string = base64.b64encode(img_bytes).decode('utf-8')
-    print(f"data:image/jpeg;base64,{base64_string}")
-    return f"data:image/jpeg;base64,{base64_string}"
 
-# Использование
-skeleton_data_uri = generate_skeleton('static/images/output240.jpg')
-print(skeleton_data_uri)
+    # 5. Кодируем в base64
+    # base64_string = base64.b64encode(img_bytes).decode('utf-8')
+    # return f"data:image/jpeg;base64,{base64_string}"
+    return img
+
+# Сохранение файлов в облачное храниище
+def save_to_minio():
+    pass

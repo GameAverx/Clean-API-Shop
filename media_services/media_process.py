@@ -12,8 +12,6 @@ redis_client = redis.Redis(host='localhost', port=8067, db=0)
 def process_media_worker():
     """Бесконечный цикл обработки задач из очереди"""
     print('process_media_worker')
-    print('process_media_worker')
-    print('process_media_worker')
     while True:
         # Берем задачу из очереди
         _, task_json = redis_client.brpop('media_tasks')
@@ -23,9 +21,17 @@ def process_media_worker():
             # Обрабатываем картинку
             results = process_image(
                 task['image_data'],
-                task['sizes']
+                task['sizes'],
+                'product',
+                task['product_id']
             )
-
+        elif task['type'] == 'process_avatar_image':
+            results = process_image(
+                task['image_data'],
+                task['sizes'],
+                'avatar',
+                task['user_id']
+            )
             # Сохраняем в S3/MinIO
             # urls = save_to_s3(results, task['product_id'])
 
