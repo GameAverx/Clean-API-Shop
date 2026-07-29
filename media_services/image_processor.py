@@ -3,29 +3,49 @@ import base64
 from io import BytesIO
 import os
 
+
+
 def process_image(image_base64, sizes, type, id): #id для папки
     image = base64_to_pil(image_base64)
+
+    config = IMAGE_TYPES[type]
+    if not config:
+        raise ValueError(f"Unknown image type: {type}")
+    print('1232132qdqdewvvqw')
     for size in sizes:
         width, height = size
         cropped = crop_to_viewport(image, width, height)
-        print("1232132132134wtf")
-        if type == 'avatar':
-            os.makedirs(f"static/images/profiles/{id}", exist_ok=True)
-            cropped.save(f'static/images/profiles/{id}/{width}.jpg', format='JPEG', quality=85)
 
-        elif type == 'product':
-            os.makedirs(f"static/images/product/{id}", exist_ok=True)
-            cropped.save(f'static/images/product/{id}/{width}.jpg', format='JPEG', quality=85)
 
-    if type == 'avatar':
-        skeleton = generate_skeleton(f"static/images/profiles/{id}/{max(sizes)[0]}.jpg")
-        skeleton.save(f'static/images/profiles/{id}/skeleton.jpg', format='JPEG', quality=30)
-        # skeleton_base64 = generate_skeleton(f"static/images/profiles/{id}/{max(sizes)[0]}.jpg")
-    elif type == 'product':
-        skeleton = generate_skeleton(f"static/images/product/{id}/{max(sizes)[0]}.jpg")
-        skeleton.save(f'static/images/product/{id}/skeleton.jpg', format='JPEG', quality=30)
-        # skeleton_base64 = generate_skeleton(f"static/images/{id}/skeleton{max(sizes)[0]}.jpg")
+        os.makedirs(config['base_path'].format(id=id), exist_ok=True)
+        cropped.save(config['base_path'].format(id=id) + f'/{width}.jpg', format=config['img_format'], quality=config['img_quality'])
+    print('w1iknqw')
+        # if type == 'avatar':
+        #     os.makedirs(f"static/images/profiles/{id}", exist_ok=True)
+        #     cropped.save(f'static/images/profiles/{id}/{width}.jpg', format='JPEG', quality=85)
+        #
+        # elif type == 'product':
+        #     os.makedirs(f"static/images/product/{id}", exist_ok=True)
+        #     cropped.save(f'static/images/product/{id}/{width}.jpg', format='JPEG', quality=85)
 
+    # skeleton = generate_skeleton(f"static/images/profiles|product/{id}/{max(sizes)[0]}.jpg")
+    skeleton = generate_skeleton(config['base_path'].format(id=id) + f'/{max(sizes)[0]}.jpg')
+    # skeleton.save(f'static/images/profiles/{id}/skeleton.jpg', format='JPEG', quality=30)
+    skeleton.save( config['skeleton_path'].format(id=id), format= config['skeleton_format'],quality=config['skeleton_quality'])
+
+# Варианты типов
+IMAGE_TYPES = {'avatar': {'base_path': 'static/images/profiles/{id}',
+                        'skeleton_path': 'static/images/profiles/{id}/skeleton.jpg',
+                        'img_format': 'JPEG',
+                        'skeleton_format' : 'JPEG',
+                        'skeleton_quality': 30,
+                        'img_quality': 85},
+            'product': {'base_path': 'static/images/product/{id}',
+                        'skeleton_path': 'static/images/product/{id}/skeleton.jpg',
+                        'img_format': 'JPEG',
+                        'skeleton_format' : 'JPEG',
+                        'skeleton_quality': 30,
+                        'img_quality': 85}}
 
 # Превращаем base64 в PIL Image
 def base64_to_pil(base64_string):

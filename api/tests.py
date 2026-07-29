@@ -1,6 +1,20 @@
-sizes = [(160, 160), (64, 64), (240, 240), (500,500)]
+def avatar_type(sizes, id):
+    print("avatar_type", sizes, id)
 
-print(max(sizes)[0])
+
+# type == 'product'
+def product_type(sizes, id):
+    print("product_type", sizes, id )
+
+type_dict = {'avatar': avatar_type, 'product': product_type}
+type = 'product'
+
+type_dict[type](123, 12)
+
+print(type_dict.get('avatar')(123, 34))
+
+ds = '1232321321{id}'
+print(ds.format(id='wtf'))
 # reg
 # {
 #     "email": "user@example.com",
